@@ -8,6 +8,7 @@ import pandas as pd
 import streamlit as st
 from maplibre import Map, MapOptions
 from maplibre.controls import NavigationControl
+from streamlit.errors import StreamlitSecretNotFoundError
 from maplibre.streamlit import st_maplibre
 
 
@@ -151,8 +152,11 @@ def build_layers(
 
 
 def get_maptiler_key() -> str | None:
-    if "MAPTILER_KEY" in st.secrets:
-        return st.secrets["MAPTILER_KEY"]
+    try:
+        if "MAPTILER_KEY" in st.secrets:
+            return st.secrets["MAPTILER_KEY"]
+    except StreamlitSecretNotFoundError:
+        pass
     return os.environ.get("MAPTILER_KEY")
 
 
