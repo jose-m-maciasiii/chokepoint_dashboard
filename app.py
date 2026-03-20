@@ -258,9 +258,58 @@ def build_map(
 
 st.set_page_config(page_title="Chokepoint Dashboard", layout="wide")
 
+st.markdown(
+    """
+    <style>
+    .block-container {
+        padding-top: 2rem;
+        padding-bottom: 2rem;
+    }
+    div[data-testid="stMetric"] {
+        background: rgba(255, 255, 255, 0.55);
+        border: 1px solid rgba(0, 84, 164, 0.12);
+        border-radius: 14px;
+        padding: 0.75rem 0.9rem;
+    }
+    div[data-testid="stSelectbox"],
+    div[data-testid="stPills"] {
+        margin-bottom: 0.35rem;
+    }
+    .dashboard-kicker {
+        color: #0054a4;
+        font-size: 0.82rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        margin-bottom: 0.2rem;
+    }
+    .dashboard-subtitle {
+        max-width: 62rem;
+        color: #465068;
+        font-size: 1rem;
+        line-height: 1.6;
+        margin-bottom: 1.35rem;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
+st.markdown('<div class="dashboard-kicker">CSIS Futures Lab</div>', unsafe_allow_html=True)
 st.title("Global Chokepoint Analyzer")
+st.markdown(
+    """
+    <div class="dashboard-subtitle">
+    The global economy relies on freedom of navigation and a rules-based order for economic prosperity.
+    In an age of strategic competition, rivals of the United States have signaled their intent to compete
+    for influence at these intersections. This tool helps identify where maritime traffic, chokepoints,
+    and nearby countries converge for closer strategic review.
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
 st.caption(
-    "The global economy relies on freedom of navigation and a rules-based order for economic prosperity. In an age of strategic competition, rivals of the United States have signaled their intent to compete for influence at these intersections. That places the U.S. and its allies and partners under greater pressure to study these regions more closely. This tool was designed by the CSIS Futures Lab at the direction of Romina Bandura from the CSIS Project on Prosperity and Development."
+    "Designed by the CSIS Futures Lab at the direction of Romina Bandura from the CSIS Project on Prosperity and Development."
 )
 
 summary = load_csv(DATA_DIR / "chokepoint_country_summary.csv")
