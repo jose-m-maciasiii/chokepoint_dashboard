@@ -7,7 +7,6 @@ from pathlib import Path
 import folium
 import pandas as pd
 import streamlit as st
-from streamlit.errors import StreamlitSecretNotFoundError
 from streamlit_folium import st_folium
 
 
@@ -96,15 +95,6 @@ def map_center(points_geojson: dict, selected_port: str) -> tuple[float, float, 
     return (sum(lats) / len(lats), sum(lons) / len(lons), zoom)
 
 
-def get_maptiler_key() -> str | None:
-    try:
-        if "MAPTILER_KEY" in st.secrets:
-            return st.secrets["MAPTILER_KEY"]
-    except StreamlitSecretNotFoundError:
-        pass
-    return os.environ.get("MAPTILER_KEY")
-
-
 def basemap_config() -> tuple[str | None, str]:
     return (
         "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
@@ -126,6 +116,7 @@ def summary_html(props: dict) -> str:
 
 
 def build_map(
+    maritime_routes_geojson: dict,
     selected_countries_geojson: dict,
     selected_buffers_geojson: dict,
     selected_points_geojson: dict,
@@ -158,6 +149,17 @@ def build_map(
             overlay=False,
             control=False,
         ).add_to(m)
+
+    folium.GeoJson(
+        maritime_routes_geojson,
+        name="Maritime routes",
+        style_function=lambda _: {
+            "color": CSIS_COLORS["cyan"],
+            "weight": 0.9,
+            "opacity": 0.35,
+        },
+        smooth_factor=1.0,
+    ).add_to(m)
 
     folium.GeoJson(
         selected_countries_geojson,
@@ -231,15 +233,16 @@ def build_map(
 
 st.set_page_config(page_title="Chokepoint Dashboard", layout="wide")
 
-st.title("Chokepoint Buffer Dashboard")
+st.title("Global Chokepoint Analyzer")
 st.caption(
-    "Countries of interest intersecting 500 km and 1000 km buffers around chokepoints."
+    "The global economy relies on freedom of navigation and a rules-based order for economic prosperity. In an age of strategic competition, rivals of the United States have signaled their intent to compete for influence at these intersections. That places the U.S. and its allies and partners under greater pressure to study these regions more closely. This tool was designed by the CSIS Futures Lab at the direction of Romina Bandura from the CSIS Project on Prosperity and Development."
 )
 
 summary = load_csv(DATA_DIR / "chokepoint_country_summary.csv")
 proximity = load_csv(DATA_DIR / "chokepoint_country_proximity.csv")
 chokepoints_geojson = load_geojson(DATA_DIR / "chokepoints.geojson")
 countries_geojson = load_geojson(DATA_DIR / "countries_of_interest.geojson")
+maritime_routes_geojson = load_geojson(DATA_DIR / "simple_maritime_routes.geojson")
 buffers_500_geojson = load_geojson(DATA_DIR / "buffers_500km.geojson")
 buffers_1000_geojson = load_geojson(DATA_DIR / "buffers_1000km.geojson")
 
@@ -256,18 +259,18 @@ map_card = top_cols[1].container(border=True)
 _, basemap_label = basemap_config()
 
 with control_card:
-    st.subheader("Controls")
+    st.subheader("Select A Chokepoint")
     selected_port = st.selectbox(
         "Chokepoint",
         options=port_options,
         index=port_options.index(query_port),
     )
     distance_option = st.pills(
-        "Buffer distance",
+        "Distance from Chokepoint Center",
         options=[500, 1000],
         default=int(query_distance) if query_distance in {"500", "1000"} else 500,
     )
-    st.caption(f"Basemap: {basemap_label}")
+
 
 st.query_params["distance"] = str(distance_option)
 if selected_port == "All chokepoints":
@@ -322,6 +325,7 @@ selected_buffers_geojson = attach_summary_properties(selected_buffers_geojson, s
 selected_points_geojson = attach_summary_properties(selected_points_geojson, summary)
 
 dashboard_map = build_map(
+    maritime_routes_geojson=maritime_routes_geojson,
     selected_countries_geojson=selected_countries_geojson,
     selected_buffers_geojson=selected_buffers_geojson,
     selected_points_geojson=selected_points_geojson,
@@ -330,6 +334,10 @@ dashboard_map = build_map(
 )
 
 with control_card:
+    st.write("")
+    st.write(f"Highlighted countries: within `{accent_label}` of the selected chokepoint set.")
+    st.write("Yellow points mark chokepoint locations. Red buffer polygons are shown as transparent overlays.")
+    st.write("Light blue maritime routes show major shipping lanes, with emphasis on where traffic converges near chokepoints.")
     st.write("")
     if selected_port == "All chokepoints":
         metric_cols = st.columns(2)
@@ -348,11 +356,11 @@ with control_card:
         metric_cols[0].metric(f"Countries within {distance_option} km", int(row[count_column]))
         metric_cols[1].metric("Closest country", row["closest_country"])
         st.metric("Closest distance (km)", round(float(row["closest_distance_km"]), 1))
-        st.write("Countries in buffer")
+        st.write("Countries in range")
         st.write(row[list_column] if pd.notna(row[list_column]) else "None")
 
 with map_card:
-    st.subheader("Map")
+    # st.subheader("Map")
     st_folium(
         dashboard_map,
         height=700,
@@ -360,8 +368,6 @@ with map_card:
         use_container_width=True,
         returned_objects=[],
     )
-    st.write(f"Highlighted countries: within `{accent_label}` of the selected chokepoint set.")
-    st.write("Blue points are chokepoint locations. Buffer polygons are shown as transparent overlays.")
 
 table_card = st.container(border=True)
 with table_card:
