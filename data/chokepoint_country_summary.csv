@@ -1,0 +1,29 @@
+portid,portname,n_countries_500km,countries_500km,iso3_500km,n_countries_1000km,countries_1000km,iso3_1000km,closest_country,closest_iso3,closest_distance_km
+chokepoint1,Suez Canal,6,Egypt | Israel | Jordan | Lebanon | Saudi Arabia | Syria,EGY | ISR | JOR | LBN | SAU | SYR,11,Cyprus | Egypt | Greece | Iraq | Israel | Jordan | Lebanon | Libya | Saudi Arabia | Syria | Turkey,CYP | EGY | GRC | IRQ | ISR | JOR | LBN | LBY | SAU | SYR | TUR,Egypt,EGY,0
+chokepoint10,Oresund Strait,4,Denmark | Germany | Poland | Sweden,DEU | DNK | POL | SWE,9,Denmark | Germany | Latvia | Lithuania | Netherlands | Norway | Poland | Russia | Sweden,DEU | DNK | LTU | LVA | NLD | NOR | POL | RUS | SWE,Sweden,SWE,9.892782886993462
+chokepoint11,Taiwan Strait,3,China | Japan | Taiwan,CHN | JPN | TWN,4,China | Japan | Philippines | Taiwan,CHN | JPN | PHL | TWN,China,CHN,83.11561196921221
+chokepoint12,Korea Strait,2,Japan | South Korea,JPN | KOR,3,China | Japan | South Korea,CHN | JPN | KOR,Japan,JPN,0
+chokepoint13,Tsugaru Strait,1,Japan,JPN,3,China | Japan | Russia,CHN | JPN | RUS,Japan,JPN,14.94753874489541
+chokepoint14,Luzon Strait,2,Philippines | Taiwan,PHL | TWN,4,China | Japan | Philippines | Taiwan,CHN | JPN | PHL | TWN,Philippines,PHL,54.8702090665239
+chokepoint15,Lombok Strait,1,Indonesia,IDN,2,Indonesia | Timor-Leste,IDN | TLS,Indonesia,IDN,10.896266582714349
+chokepoint16,Ombai Strait,2,Indonesia | Timor-Leste,IDN | TLS,3,Australia | Indonesia | Timor-Leste,AUS | IDN | TLS,Indonesia,IDN,4.968986972932932
+chokepoint17,Bohai Strait,1,China,CHN,2,China | South Korea,CHN | KOR,China,CHN,58.692242082055756
+chokepoint18,Torres Strait,3,Australia | Indonesia | Papua New Guinea,AUS | IDN | PNG,3,Australia | Indonesia | Papua New Guinea,AUS | IDN | PNG,Australia,AUS,23.920233382667966
+chokepoint19,Sunda Strait,1,Indonesia,IDN,3,Indonesia | Malaysia | Singapore,IDN | MYS | SGP,Indonesia,IDN,16.78628813731986
+chokepoint2,Panama Canal,4,Colombia | Costa Rica | Nicaragua | Panama,COL | CRI | NIC | PAN,7,Colombia | Costa Rica | Ecuador | Honduras | Nicaragua | Panama | Venezuela,COL | CRI | ECU | HND | NIC | PAN | VEN,Panama,PAN,0
+chokepoint20,Makassar Strait,2,Indonesia | Malaysia,IDN | MYS,4,Brunei | Indonesia | Malaysia | Philippines,BRN | IDN | MYS | PHL,Indonesia,IDN,62.74244282298179
+chokepoint21,Magellan Strait,2,Argentina | Chile,ARG | CHL,2,Argentina | Chile,ARG | CHL,Chile,CHL,0
+chokepoint22,Yucatan Channel,3,Belize | Cuba | Mexico,BLZ | CUB | MEX,10,Bahamas | Belize | Cuba | El Salvador | Guatemala | Honduras | Jamaica | Mexico | Nicaragua | United States,BHS | BLZ | CUB | GTM | HND | JAM | MEX | NIC | SLV | USA,Cuba,CUB,84.75700301260758
+chokepoint23,Windward Passage,5,Bahamas | Cuba | Dominican Republic | Haiti | Jamaica,BHS | CUB | DOM | HTI | JAM,8,Bahamas | Colombia | Cuba | Dominican Republic | Haiti | Jamaica | United States | Venezuela,BHS | COL | CUB | DOM | HTI | JAM | USA | VEN,Haiti,HTI,39.18809830486535
+chokepoint24,Mona Passage,2,Dominican Republic | Haiti,DOM | HTI,15,Antigua & Barbuda | Bahamas | Colombia | Cuba | Dominica | Dominican Republic | France | Grenada | Haiti | Jamaica | Netherlands | St. Kitts & Nevis | St. Lucia | St. Vincent & Grenadines | Venezuela,ATG | BHS | COL | CUB | DMA | DOM | FRA | GRD | HTI | JAM | KNA | LCA | NLD | VCT | VEN,Dominican Republic,DOM,72.41944025798227
+chokepoint25,Balabac Strait,4,Brunei | Indonesia | Malaysia | Philippines,BRN | IDN | MYS | PHL,4,Brunei | Indonesia | Malaysia | Philippines,BRN | IDN | MYS | PHL,Malaysia,MYS,9.265860468313756
+chokepoint26,Bering Strait,2,Russia | United States,RUS | USA,2,Russia | United States,RUS | USA,United States,USA,0
+chokepoint27,Mindoro Strait,1,Philippines,PHL,3,Indonesia | Malaysia | Philippines,IDN | MYS | PHL,Philippines,PHL,34.234625143054416
+chokepoint28,Kerch Strait,3,Georgia | Russia | Ukraine,GEO | RUS | UKR,6,Bulgaria | Georgia | Romania | Russia | Turkey | Ukraine,BGR | GEO | ROU | RUS | TUR | UKR,Russia,RUS,5.896079651013526
+chokepoint3,Bosporus Strait,4,Bulgaria | Greece | Romania | Turkey,BGR | GRC | ROU | TUR,8,Albania | Bulgaria | Cyprus | Greece | Romania | Russia | Turkey | Ukraine,ALB | BGR | CYP | GRC | ROU | RUS | TUR | UKR,Turkey,TUR,0
+chokepoint4,Bab el-Mandeb Strait,4,Djibouti | Eritrea | Saudi Arabia | Yemen,DJI | ERI | SAU | YEM,7,Djibouti | Eritrea | Kenya | Saudi Arabia | Somalia | Sudan | Yemen,DJI | ERI | KEN | SAU | SDN | SOM | YEM,Yemen,YEM,14.437454583242213
+chokepoint5,Malacca Strait,4,Indonesia | Malaysia | Singapore | Thailand,IDN | MYS | SGP | THA,5,Indonesia | Malaysia | Singapore | Thailand | Vietnam,IDN | MYS | SGP | THA | VNM,Indonesia,IDN,20.313267622904345
+chokepoint6,Strait of Hormuz,4,Iran | Oman | Saudi Arabia | United Arab Emirates,ARE | IRN | OMN | SAU,8,Bahrain | Iran | Kuwait | Oman | Pakistan | Qatar | Saudi Arabia | United Arab Emirates,ARE | BHR | IRN | KWT | OMN | PAK | QAT | SAU,Iran,IRN,28.72947639999205
+chokepoint7,Cape of Good Hope,1,South Africa,ZAF,2,Namibia | South Africa,NAM | ZAF,South Africa,ZAF,66.76512941861786
+chokepoint8,Gibraltar Strait,4,Algeria | Morocco | Portugal | Spain,DZA | ESP | MAR | PRT,4,Algeria | Morocco | Portugal | Spain,DZA | ESP | MAR | PRT,Spain,ESP,16.14330239644785
+chokepoint9,Dover Strait,5,Belgium | France | Germany | Netherlands | United Kingdom,BEL | DEU | FRA | GBR | NLD,6,Belgium | France | Germany | Ireland | Netherlands | United Kingdom,BEL | DEU | FRA | GBR | IRL | NLD,United Kingdom,GBR,27.095118933549603
