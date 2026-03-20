@@ -386,13 +386,14 @@ with control_card:
 
 with map_card:
     # st.subheader("Map")
-    st_folium(
-        dashboard_map,
-        height=700,
-        width=None,
-        use_container_width=True,
-        returned_objects=[],
-    )
+    with st.spinner("Loading map layers..."):
+        st_folium(
+            dashboard_map,
+            height=700,
+            width=None,
+            use_container_width=True,
+            returned_objects=[],
+        )
 
 table_card = st.container(border=True)
 with table_card:
