@@ -24,7 +24,6 @@ CSIS_COLORS = {
 }
 
 
-@st.cache_data
 def load_geojson(path: Path) -> dict:
     with path.open("r", encoding="utf-8") as f:
         return json.load(f)
@@ -155,9 +154,35 @@ def build_map(
         name="Maritime routes",
         style_function=lambda _: {
             "color": CSIS_COLORS["cyan"],
-            "weight": 0.9,
-            "opacity": 0.35,
+            "weight": 0.7,
+            "opacity": 0.2,
         },
+        tooltip=folium.GeoJsonTooltip(
+            fields=[
+                "start_port",
+                "end_port",
+                "start_loco",
+                "end_locode",
+                "vessel_typ",
+                "unique_mms",
+                "num_segs",
+                "length_avg",
+                "width_avg",
+            ],
+            aliases=[
+                "Start port",
+                "End port",
+                "Start LOCODE",
+                "End LOCODE",
+                "Primary vessel type",
+                "Unique MMSI",
+                "Route segments",
+                "Average vessel length",
+                "Average vessel width",
+            ],
+            sticky=False,
+            labels=True,
+        ),
         smooth_factor=1.0,
     ).add_to(m)
 
