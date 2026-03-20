@@ -9,7 +9,7 @@ This folder is a deployment-ready starting point for a Streamlit dashboard that 
 
 ## Files
 
-- `app.py`: Streamlit app using `maplibre.streamlit`
+- `app.py`: Streamlit app using `folium` and `streamlit-folium`
 - `requirements.txt`: Python dependencies for deployment
 - `export_dashboard_data.R`: Regenerates the dashboard data files from `../clean_standardize.R`
 - `data/`: GeoJSON and CSV files used by the app

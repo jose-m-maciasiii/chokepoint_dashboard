@@ -4,12 +4,11 @@ import json
 import os
 from pathlib import Path
 
+import folium
 import pandas as pd
 import streamlit as st
-from maplibre import Map, MapOptions
-from maplibre.controls import NavigationControl
 from streamlit.errors import StreamlitSecretNotFoundError
-from maplibre.streamlit import st_maplibre
+from streamlit_folium import st_folium
 
 
 APP_DIR = Path(__file__).resolve().parent if "__file__" in globals() else Path.cwd()
@@ -40,8 +39,12 @@ def attach_summary_properties(geojson: dict, summary_df: pd.DataFrame) -> dict:
     summary_lookup = (
         summary_df.fillna("")
         .assign(
-            countries_500km=lambda df: df["countries_500km"].astype(str).str.replace("|", ", ", regex=False),
-            countries_1000km=lambda df: df["countries_1000km"].astype(str).str.replace("|", ", ", regex=False),
+            countries_500km=lambda df: df["countries_500km"]
+            .astype(str)
+            .str.replace("|", ", ", regex=False),
+            countries_1000km=lambda df: df["countries_1000km"]
+            .astype(str)
+            .str.replace("|", ", ", regex=False),
             closest_distance_km=lambda df: df["closest_distance_km"].map(
                 lambda x: round(float(x), 1) if x != "" else ""
             ),
@@ -75,80 +78,12 @@ def map_center(points_geojson: dict, selected_port: str) -> tuple[float, float, 
         ]
 
     if not features:
-        return (20.0, 15.0, 1.3)
+        return (15.0, 20.0, 2.0)
 
     lons = [feature["geometry"]["coordinates"][0] for feature in features]
     lats = [feature["geometry"]["coordinates"][1] for feature in features]
     zoom = 2.0 if selected_port == "All chokepoints" else 4.0
-    return (sum(lons) / len(lons), sum(lats) / len(lats), zoom)
-
-
-def build_layers(
-    countries_geojson: dict,
-    selected_countries_geojson: dict,
-    selected_buffers_geojson: dict,
-    selected_points_geojson: dict,
-    distance_option: int,
-) -> list[dict]:
-    if distance_option == 500:
-        country_fill = [211, 84, 0, 160]
-        buffer_color = [211, 84, 0]
-    else:
-        country_fill = [0, 119, 182, 160]
-        buffer_color = [0, 119, 182]
-
-    return [
-        {
-            "@@type": "GeoJsonLayer",
-            "id": "countries-background",
-            "data": countries_geojson,
-            "stroked": True,
-            "filled": True,
-            "getFillColor": [235, 238, 241, 80],
-            "getLineColor": [180, 180, 180],
-            "lineWidthMinPixels": 0.5,
-            "pickable": False,
-            "autoHighlight": False,
-        },
-        {
-            "@@type": "GeoJsonLayer",
-            "id": f"buffers-{distance_option}km",
-            "data": selected_buffers_geojson,
-            "stroked": True,
-            "filled": True,
-            "getFillColor": buffer_color + [35],
-            "getLineColor": buffer_color,
-            "lineWidthMinPixels": 1.2,
-            "pickable": True,
-            "autoHighlight": True,
-        },
-        {
-            "@@type": "GeoJsonLayer",
-            "id": f"countries-highlight-{distance_option}km",
-            "data": selected_countries_geojson,
-            "stroked": True,
-            "filled": True,
-            "getFillColor": country_fill,
-            "getLineColor": [255, 255, 255],
-            "lineWidthMinPixels": 1,
-            "pickable": False,
-            "autoHighlight": False,
-        },
-        {
-            "@@type": "GeoJsonLayer",
-            "id": "chokepoints",
-            "data": selected_points_geojson,
-            "pointType": "circle",
-            "filled": True,
-            "stroked": True,
-            "getFillColor": [8, 48, 107, 220],
-            "getLineColor": [255, 255, 255, 220],
-            "getPointRadius": 30000,
-            "pointRadiusMinPixels": 5,
-            "pickable": True,
-            "autoHighlight": True,
-        },
-    ]
+    return (sum(lats) / len(lats), sum(lons) / len(lons), zoom)
 
 
 def get_maptiler_key() -> str | None:
@@ -160,17 +95,132 @@ def get_maptiler_key() -> str | None:
     return os.environ.get("MAPTILER_KEY")
 
 
-def get_basemap_style() -> tuple[str, str]:
-    maptiler_key = get_maptiler_key()
-    if maptiler_key:
-        return (
-            f"https://api.maptiler.com/maps/basic-v2/style.json?key={maptiler_key}",
-            "MapTiler basic-v2",
-        )
+def basemap_config() -> tuple[str | None, str]:
     return (
-        "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json",
-        "Carto Positron fallback",
+        "https://tiles.stadiamaps.com/tiles/alidade_satellite/{z}/{x}/{y}{r}.jpg",
+        "Stadia Alidade Satellite",
     )
+
+
+def summary_html(props: dict) -> str:
+    return f"""
+    <b>{props.get('portname', '')}</b><br/>
+    Port ID: {props.get('portid', '')}<hr/>
+    <b>500 km count:</b> {props.get('n_countries_500km', '')}<br/>
+    <b>500 km countries:</b> {props.get('countries_500km', '')}<br/>
+    <b>1000 km count:</b> {props.get('n_countries_1000km', '')}<br/>
+    <b>1000 km countries:</b> {props.get('countries_1000km', '')}<br/>
+    <b>Closest country:</b> {props.get('closest_country', '')}<br/>
+    <b>Closest distance (km):</b> {props.get('closest_distance_km', '')}
+    """
+
+
+def build_map(
+    selected_countries_geojson: dict,
+    selected_buffers_geojson: dict,
+    selected_points_geojson: dict,
+    selected_port: str,
+    distance_option: int,
+) -> folium.Map:
+    center_lat, center_lon, zoom = map_center(selected_points_geojson, selected_port)
+    tile_url, _ = basemap_config()
+
+    if distance_option == 500:
+        highlight_fill = "#d35400"
+    else:
+        highlight_fill = "#0077b6"
+
+    m = folium.Map(
+        location=[center_lat, center_lon],
+        zoom_start=zoom,
+        tiles=None,
+        control_scale=True,
+    )
+
+    if tile_url:
+        folium.TileLayer(
+            tiles=tile_url,
+            attr=(
+                '&copy; CNES, Distribution Airbus DS, &copy; Airbus DS, '
+                '&copy; PlanetObserver (Contains Copernicus Data) | '
+                '&copy; <a href="https://www.stadiamaps.com/" target="_blank">Stadia Maps</a> '
+                '&copy; <a href="https://openmaptiles.org/" target="_blank">OpenMapTiles</a> '
+                '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            ),
+            name=basemap_config()[1],
+            overlay=False,
+            control=False,
+            max_zoom=20,
+        ).add_to(m)
+
+    folium.GeoJson(
+        selected_countries_geojson,
+        name=f"Countries within {distance_option} km",
+        style_function=lambda _: {
+            "fillColor": highlight_fill,
+            "color": "#ffffff",
+            "weight": 1,
+            "fillOpacity": 0.55,
+        },
+        tooltip=folium.GeoJsonTooltip(
+            fields=["country_std", "iso3"],
+            aliases=["Country", "ISO3"],
+            sticky=False,
+        ),
+    ).add_to(m)
+
+    folium.GeoJson(
+        selected_buffers_geojson,
+        name=f"Buffers {distance_option} km",
+        style_function=lambda _: {
+            "fillColor": highlight_fill,
+            "color": highlight_fill,
+            "weight": 2,
+            "fillOpacity": 0.08,
+        },
+        tooltip=folium.GeoJsonTooltip(
+            fields=[
+                "portname",
+                "n_countries_500km",
+                "countries_500km",
+                "n_countries_1000km",
+                "countries_1000km",
+                "closest_country",
+                "closest_distance_km",
+            ],
+            aliases=[
+                "Chokepoint",
+                "500 km count",
+                "500 km countries",
+                "1000 km count",
+                "1000 km countries",
+                "Closest country",
+                "Closest distance (km)",
+            ],
+            sticky=True,
+            labels=True,
+        ),
+    ).add_to(m)
+
+    point_group = folium.FeatureGroup(name="Chokepoints")
+    for feature in selected_points_geojson["features"]:
+        lon, lat = feature["geometry"]["coordinates"]
+        props = feature["properties"]
+        folium.CircleMarker(
+            location=[lat, lon],
+            radius=6,
+            color="#ffffff",
+            weight=2,
+            fill=True,
+            fill_color="#08306b",
+            fill_opacity=0.95,
+            tooltip=folium.Tooltip(summary_html(props), sticky=True),
+            popup=folium.Popup(summary_html(props), max_width=450),
+        ).add_to(point_group)
+    point_group.add_to(m)
+
+    folium.LayerControl(collapsed=False).add_to(m)
+    return m
 
 
 st.set_page_config(page_title="Chokepoint Dashboard", layout="wide")
@@ -195,10 +245,9 @@ if query_port not in port_options:
     query_port = "All chokepoints"
 
 top_cols = st.columns([1, 2.4])
-
 control_card = top_cols[0].container(border=True, height="stretch")
 map_card = top_cols[1].container(border=True)
-basemap_style, basemap_label = get_basemap_style()
+_, basemap_label = basemap_config()
 
 with control_card:
     st.subheader("Controls")
@@ -250,12 +299,10 @@ selected_countries_geojson = feature_collection_subset(
     countries_geojson,
     lambda feature: feature["properties"].get("iso3") in highlight_iso3,
 )
-
 selected_buffers_geojson = feature_collection_subset(
     buffer_geojson,
     lambda feature: feature["properties"].get("portid") in port_ids,
 )
-
 selected_points_geojson = feature_collection_subset(
     chokepoints_geojson,
     lambda feature: (
@@ -268,37 +315,12 @@ selected_points_geojson = feature_collection_subset(
 selected_buffers_geojson = attach_summary_properties(selected_buffers_geojson, summary)
 selected_points_geojson = attach_summary_properties(selected_points_geojson, summary)
 
-center_lon, center_lat, zoom = map_center(chokepoints_geojson, selected_port)
-
-map_options = MapOptions(
-    style=basemap_style,
-    center=(center_lon, center_lat),
-    zoom=zoom,
-    pitch=0,
-    hash=True,
-)
-
-map_object = Map(map_options)
-map_object.add_control(NavigationControl())
-map_object.add_deck_layers(
-    build_layers(
-        countries_geojson=countries_geojson,
-        selected_countries_geojson=selected_countries_geojson,
-        selected_buffers_geojson=selected_buffers_geojson,
-        selected_points_geojson=selected_points_geojson,
-        distance_option=distance_option,
-    ),
-    tooltip="""
-    <b>{{ properties.portname }}</b><br/>
-    Port ID: {{ properties.portid }}
-    <hr/>
-    <b>500 km count:</b> {{ properties.n_countries_500km }}<br/>
-    <b>500 km countries:</b> {{ properties.countries_500km }}<br/>
-    <b>1000 km count:</b> {{ properties.n_countries_1000km }}<br/>
-    <b>1000 km countries:</b> {{ properties.countries_1000km }}<br/>
-    <b>Closest country:</b> {{ properties.closest_country }}<br/>
-    <b>Closest distance (km):</b> {{ properties.closest_distance_km }}
-    """,
+dashboard_map = build_map(
+    selected_countries_geojson=selected_countries_geojson,
+    selected_buffers_geojson=selected_buffers_geojson,
+    selected_points_geojson=selected_points_geojson,
+    selected_port=selected_port,
+    distance_option=distance_option,
 )
 
 with control_card:
@@ -325,34 +347,42 @@ with control_card:
 
 with map_card:
     st.subheader("Map")
-    st_maplibre(map_object, height=700)
+    st_folium(
+        dashboard_map,
+        height=700,
+        width=None,
+        use_container_width=True,
+        returned_objects=[],
+    )
     st.write(f"Highlighted countries: within `{accent_label}` of the selected chokepoint set.")
     st.write("Blue points are chokepoint locations. Buffer polygons are shown as transparent overlays.")
 
-st.subheader("Chokepoint Table")
-if selected_port == "All chokepoints":
-    st.dataframe(
-        summary_view[
-            [
-                "portname",
-                "n_countries_500km",
-                "n_countries_1000km",
-                "closest_country",
-                "closest_distance_km",
-            ]
-        ].sort_values("portname"),
-        width="stretch",
-    )
-else:
-    st.dataframe(
-        proximity_view[
-            [
-                "country_std",
-                "iso3",
-                "distance_km",
-                "within_500km",
-                "within_1000km",
-            ]
-        ].sort_values("distance_km"),
-        width="stretch",
-    )
+table_card = st.container(border=True)
+with table_card:
+    st.subheader("Chokepoint Table")
+    if selected_port == "All chokepoints":
+        st.dataframe(
+            summary_view[
+                [
+                    "portname",
+                    "n_countries_500km",
+                    "n_countries_1000km",
+                    "closest_country",
+                    "closest_distance_km",
+                ]
+            ].sort_values("portname"),
+            width="stretch",
+        )
+    else:
+        st.dataframe(
+            proximity_view[
+                [
+                    "country_std",
+                    "iso3",
+                    "distance_km",
+                    "within_500km",
+                    "within_1000km",
+                ]
+            ].sort_values("distance_km"),
+            width="stretch",
+        )
