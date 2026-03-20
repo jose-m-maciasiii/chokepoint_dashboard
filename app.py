@@ -1,12 +1,12 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 
 import pandas as pd
 import streamlit as st
 from maplibre import Map, MapOptions
-from maplibre.basemaps import Carto
 from maplibre.controls import NavigationControl
 from maplibre.streamlit import st_maplibre
 
@@ -150,6 +150,25 @@ def build_layers(
     ]
 
 
+def get_maptiler_key() -> str | None:
+    if "MAPTILER_KEY" in st.secrets:
+        return st.secrets["MAPTILER_KEY"]
+    return os.environ.get("MAPTILER_KEY")
+
+
+def get_basemap_style() -> tuple[str, str]:
+    maptiler_key = get_maptiler_key()
+    if maptiler_key:
+        return (
+            f"https://api.maptiler.com/maps/basic-v2/style.json?key={maptiler_key}",
+            "MapTiler basic-v2",
+        )
+    return (
+        "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json",
+        "Carto Positron fallback",
+    )
+
+
 st.set_page_config(page_title="Chokepoint Dashboard", layout="wide")
 
 st.title("Chokepoint Buffer Dashboard")
@@ -175,6 +194,7 @@ top_cols = st.columns([1, 2.4])
 
 control_card = top_cols[0].container(border=True, height="stretch")
 map_card = top_cols[1].container(border=True)
+basemap_style, basemap_label = get_basemap_style()
 
 with control_card:
     st.subheader("Controls")
@@ -188,6 +208,7 @@ with control_card:
         options=[500, 1000],
         default=int(query_distance) if query_distance in {"500", "1000"} else 500,
     )
+    st.caption(f"Basemap: {basemap_label}")
 
 st.query_params["distance"] = str(distance_option)
 if selected_port == "All chokepoints":
@@ -246,7 +267,7 @@ selected_points_geojson = attach_summary_properties(selected_points_geojson, sum
 center_lon, center_lat, zoom = map_center(chokepoints_geojson, selected_port)
 
 map_options = MapOptions(
-    style=Carto.POSITRON,
+    style=basemap_style,
     center=(center_lon, center_lat),
     zoom=zoom,
     pitch=0,
