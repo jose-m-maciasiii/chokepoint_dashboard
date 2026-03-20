@@ -14,6 +14,16 @@ from streamlit_folium import st_folium
 APP_DIR = Path(__file__).resolve().parent if "__file__" in globals() else Path.cwd()
 DATA_DIR = APP_DIR / "data"
 
+CSIS_COLORS = {
+    "blue": "#0054a4",
+    "cyan": "#3DD5ff",
+    "green": "#44C07B",
+    "red": "#E53E3A",
+    "yellow": "#FFC728",
+    "purple": "#7D4391",
+    "taupe": "#8B7B5A",
+}
+
 
 @st.cache_data
 def load_geojson(path: Path) -> dict:
@@ -97,8 +107,8 @@ def get_maptiler_key() -> str | None:
 
 def basemap_config() -> tuple[str | None, str]:
     return (
-        "https://tiles.stadiamaps.com/tiles/alidade_satellite/{z}/{x}/{y}{r}.jpg",
-        "Stadia Alidade Satellite",
+        "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
+        "CartoDB DarkMatter",
     )
 
 
@@ -124,11 +134,9 @@ def build_map(
 ) -> folium.Map:
     center_lat, center_lon, zoom = map_center(selected_points_geojson, selected_port)
     tile_url, _ = basemap_config()
-
-    if distance_option == 500:
-        highlight_fill = "#d35400"
-    else:
-        highlight_fill = "#0077b6"
+    highlight_fill = CSIS_COLORS["blue"]
+    point_fill = CSIS_COLORS["yellow"]
+    buffer_fill = CSIS_COLORS["red"]
 
     m = folium.Map(
         location=[center_lat, center_lon],
@@ -141,16 +149,14 @@ def build_map(
         folium.TileLayer(
             tiles=tile_url,
             attr=(
-                '&copy; CNES, Distribution Airbus DS, &copy; Airbus DS, '
-                '&copy; PlanetObserver (Contains Copernicus Data) | '
-                '&copy; <a href="https://www.stadiamaps.com/" target="_blank">Stadia Maps</a> '
-                '&copy; <a href="https://openmaptiles.org/" target="_blank">OpenMapTiles</a> '
-                '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors '
+                '&copy; <a href="https://carto.com/attributions">CARTO</a>'
             ),
+            subdomains="abcd",
+            max_zoom=20,
             name=basemap_config()[1],
             overlay=False,
             control=False,
-            max_zoom=20,
         ).add_to(m)
 
     folium.GeoJson(
@@ -158,9 +164,9 @@ def build_map(
         name=f"Countries within {distance_option} km",
         style_function=lambda _: {
             "fillColor": highlight_fill,
-            "color": "#ffffff",
+            "color": CSIS_COLORS["cyan"],
             "weight": 1,
-            "fillOpacity": 0.55,
+            "fillOpacity": 0.38,
         },
         tooltip=folium.GeoJsonTooltip(
             fields=["country_std", "iso3"],
@@ -173,9 +179,9 @@ def build_map(
         selected_buffers_geojson,
         name=f"Buffers {distance_option} km",
         style_function=lambda _: {
-            "fillColor": highlight_fill,
-            "color": highlight_fill,
-            "weight": 2,
+            "fillColor": buffer_fill,
+            "color": buffer_fill,
+            "weight": 2.5,
             "fillOpacity": 0.08,
         },
         tooltip=folium.GeoJsonTooltip(
@@ -209,10 +215,10 @@ def build_map(
         folium.CircleMarker(
             location=[lat, lon],
             radius=6,
-            color="#ffffff",
+            color=CSIS_COLORS["blue"],
             weight=2,
             fill=True,
-            fill_color="#08306b",
+            fill_color=point_fill,
             fill_opacity=0.95,
             tooltip=folium.Tooltip(summary_html(props), sticky=True),
             popup=folium.Popup(summary_html(props), max_width=450),
@@ -244,7 +250,7 @@ port_options = ["All chokepoints"] + sorted(summary["portname"].dropna().unique(
 if query_port not in port_options:
     query_port = "All chokepoints"
 
-top_cols = st.columns([1, 2.4])
+top_cols = st.columns([0.85, 2.75])
 control_card = top_cols[0].container(border=True, height="stretch")
 map_card = top_cols[1].container(border=True)
 _, basemap_label = basemap_config()
