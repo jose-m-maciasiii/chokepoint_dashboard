@@ -24,14 +24,21 @@ CSIS_COLORS = {
 }
 
 
-def load_geojson(path: Path) -> dict:
-    with path.open("r", encoding="utf-8") as f:
+@st.cache_data
+def _load_geojson_cached(path_str: str, mtime_ns: int) -> dict:
+    with Path(path_str).open("r", encoding="utf-8") as f:
         return json.load(f)
+
+
+def load_geojson(path: Path) -> dict:
+    stat = path.stat()
+    return _load_geojson_cached(str(path), stat.st_mtime_ns)
 
 
 @st.cache_data
 def load_csv(path: Path) -> pd.DataFrame:
-    return pd.read_csv(path)
+    with path.open("r", encoding="utf-8") as f:
+        return pd.read_csv(f)
 
 
 def feature_collection_subset(geojson: dict, predicate) -> dict:
@@ -114,6 +121,19 @@ def summary_html(props: dict) -> str:
     """
 
 
+def route_popup_html(props: dict) -> str:
+    return f"""
+    <b>{props.get('start_port', '')} to {props.get('end_port', '')}</b><hr/>
+    <b>Start LOCODE:</b> {props.get('start_loco', '')}<br/>
+    <b>End LOCODE:</b> {props.get('end_locode', '')}<br/>
+    <b>Primary vessel type:</b> {props.get('vessel_typ', '')}<br/>
+    <b>Unique MMSI:</b> {props.get('unique_mms', '')}<br/>
+    <b>Route segments:</b> {props.get('num_segs', '')}<br/>
+    <b>Average vessel length:</b> {props.get('length_avg', '')}<br/>
+    <b>Average vessel width:</b> {props.get('width_avg', '')}
+    """
+
+
 def build_map(
     maritime_routes_geojson: dict,
     selected_countries_geojson: dict,
@@ -157,7 +177,12 @@ def build_map(
             "weight": 0.7,
             "opacity": 0.2,
         },
-        tooltip=folium.GeoJsonTooltip(
+        highlight_function=lambda _: {
+            "color": CSIS_COLORS["yellow"],
+            "weight": 2.0,
+            "opacity": 0.9,
+        },
+        popup=folium.GeoJsonPopup(
             fields=[
                 "start_port",
                 "end_port",
@@ -180,9 +205,9 @@ def build_map(
                 "Average vessel length",
                 "Average vessel width",
             ],
-            sticky=False,
             labels=True,
         ),
+        popup_keep_highlighted=True,
         smooth_factor=1.0,
     ).add_to(m)
 
@@ -211,6 +236,12 @@ def build_map(
             "weight": 2.5,
             "fillOpacity": 0.08,
         },
+        highlight_function=lambda _: {
+            "fillColor": buffer_fill,
+            "color": buffer_fill,
+            "weight": 3,
+            "fillOpacity": 0.14,
+        },
         tooltip=folium.GeoJsonTooltip(
             fields=[
                 "portname",
@@ -233,6 +264,28 @@ def build_map(
             sticky=True,
             labels=True,
         ),
+        popup=folium.GeoJsonPopup(
+            fields=[
+                "portname",
+                "n_countries_500km",
+                "countries_500km",
+                "n_countries_1000km",
+                "countries_1000km",
+                "closest_country",
+                "closest_distance_km",
+            ],
+            aliases=[
+                "Chokepoint",
+                "500 km count",
+                "500 km countries",
+                "1000 km count",
+                "1000 km countries",
+                "Closest country",
+                "Closest distance (km)",
+            ],
+            labels=True,
+        ),
+        popup_keep_highlighted=True,
     ).add_to(m)
 
     point_group = folium.FeatureGroup(name="Chokepoints")
